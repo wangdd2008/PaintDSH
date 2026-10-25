@@ -84,6 +84,8 @@ npm run tauri dev
 npm run dev
 ```
 
+> 起不来（链接报 `LNK1318`、端口 1420 被占）见 `docs/runbook-dev.md`；本机也可以用 `scripts\dev.cmd`（加 `--exe` 可跳过编译）。
+
 生产构建：
 
 ```bash
@@ -172,6 +174,8 @@ ai::ops::extract_ops
 | `npm run build` | `tsc --noEmit` + `vite build` |
 | `npm run typecheck` | 只做类型检查 |
 | `npm run test` | Vitest（jsdom，fabric 全部 mock） |
+| `npm run verify` | 统一校验：typecheck + 前端测试 + `cargo test` + clippy（`scripts/verify.cmd`，pre-commit 也用它） |
+| `scripts\dev.cmd` | 起 Vite + 窗口，日志写 `%TEMP%\paint-dev.log`；`--exe` 跳过编译 |
 | `cd src-tauri && cargo test` | Rust 单测（含真实子进程/看门狗用例） |
 | `cd src-tauri && cargo clippy --all-targets -- -D warnings` | 静态检查（当前 0 告警） |
 | `cd src-tauri && cargo build` | 编译 app 二进制 |

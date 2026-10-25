@@ -294,6 +294,19 @@ rustc 1.99.1 在编译 `serde_core 1.0.229` 时会在 `rustc_mir_transform/simpl
 ## 11. 本机环境注意事项（Windows）
 
 - cargo 不在 PATH：用 `set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"` 或 `"%USERPROFILE%\.cargo\bin\cargo.exe"`。
+- **crates 索引直连会卡死**（sparse 索引停在 `config.json`，`cargo build` 无限等待）：用仓库根 `.cargo/config.toml` 换 rsproxy 镜像。该文件**只在本地**（已 gitignore），新环境照下面重建：
+
+  ```toml
+  [source.crates-io]
+  replace-with = "rsproxy-sparse"
+
+  [source.rsproxy-sparse]
+  registry = "sparse+https://rsproxy.cn/index/"
+
+  [net]
+  retry = 3
+  ```
+
 - **共享 target 目录**，避免每个 worktree 一份：`set "CARGO_TARGET_DIR=E:\data\.cache\paint-dsh\cargo-target"`。
 - npm 装包用 `npm install --cache E:\data\.cache\paint-dsh\npm-cache --prefer-offline`。
 - 本机已装真实 `dsh` 0.2.1-rc.3（`%APPDATA%\npm\node_modules\@deepseek-ai\dsh\lib\bin.js`，DSH_HOME=`~/.dsh`）。探测 dsh 时必须重定向输出到文件，禁止运行交互式 `dsh` / `dsh web` / `more`。
