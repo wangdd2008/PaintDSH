@@ -1,0 +1,10 @@
+# 本机 crates.io 直连索引拉取卡住（sparse 索引停在 config.json），改用 rsproxy 镜像。
+# 仅本地生效：本文件已在 .gitignore 中，不进版本库。
+[source.crates-io]
+replace-with = "rsproxy-sparse"
+
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[net]
+retry = 3

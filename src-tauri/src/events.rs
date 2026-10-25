@@ -14,6 +14,8 @@ pub const EVENT_AI_DELTA: &str = "ai://delta";
 pub const EVENT_AI_DONE: &str = "ai://done";
 /// AI 调用失败（载荷 = `{ sessionId, kind, message }`）。错误不走 `ai://done`。
 pub const EVENT_AI_ERROR: &str = "ai://error";
+/// AI 提议的高风险操作等待用户确认（载荷 = `{ canvasId, action, input, reason }`）。
+pub const EVENT_AI_PENDING_OP: &str = "ai://pending-op";
 /// DSH Web UI 状态（载荷 = `{ running, url?, port? }`）。
 pub const EVENT_DSH_WEB_STATUS: &str = "dsh://web-status";
 

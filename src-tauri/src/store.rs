@@ -1,7 +1,7 @@
-//! SQLite 数据层骨架。
+//! SQLite 数据层：连接、PRAGMA、顺序迁移。
 //!
-//! 连接建立 + PRAGMA + 顺序迁移。表结构（`canvases` / `layers` / `snapshots` …）从 ticket 02 起
-//! 逐条追加到 [`MIGRATIONS`] 尾部；已发布的条目不得修改（engineering-contract 第 7 节）。
+//! 表结构分散在各业务模块里（`paint::repository` / `ai::repository` / `employees`），
+//! 这里只按顺序把它们拼进 [`MIGRATIONS`]；已发布的条目不得修改（engineering-contract 第 7 节）。
 
 use std::path::Path;
 
@@ -10,7 +10,11 @@ use rusqlite::Connection;
 use crate::error::AppError;
 
 /// 顺序执行、必须幂等的 schema 迁移。**只允许往尾部追加。**
-pub const MIGRATIONS: &[&str] = &[];
+pub const MIGRATIONS: &[&str] = &[
+    crate::paint::repository::CANVAS_MIGRATIONS,
+    crate::ai::repository::AI_MIGRATIONS,
+    crate::employees::EMPLOYEE_MIGRATIONS,
+];
 
 /// PAINT 的 SQLite 连接封装。
 pub struct Store {
@@ -33,7 +37,10 @@ impl Store {
     fn from_connection(conn: Connection) -> Result<Self, AppError> {
         // journal_mode 会返回一行结果，用 query_row 读取，其余用 execute_batch。
         let _journal_mode: String = conn.query_row("PRAGMA journal_mode = WAL", [], |row| row.get(0))?;
-        conn.execute_batch("PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON;")?;
+        // busy_timeout 是 WAL + 多连接（后台 AI 线程另开连接）的最后一道保险。
+        conn.execute_batch(
+            "PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;",
+        )?;
 
         let store = Self { conn };
         store.migrate()?;
