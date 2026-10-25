@@ -3,3 +3,5 @@ dist/
 src-tauri/target/
 src-tauri/gen/
 .qwen/
+# 本机 crates 镜像配置（rsproxy），只对本机生效，不进版本库
+.cargo/config.toml
