@@ -1,0 +1,39 @@
+[package]
+name = "paint-dsh"
+version = "0.1.0"
+description = "PAINT — 基于 DSH 的 AI 辅助画图工具"
+authors = ["PAINT"]
+edition = "2021"
+rust-version = "1.77.2"
+
+# lib 名固定为 paint_dsh_lib：main.rs 只调用 paint_dsh_lib::run()（engineering-contract 第 1 节）。
+[lib]
+name = "paint_dsh_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# 依赖基线见 engineering-contract 第 10 节。尚未被本工单使用的条目为后续工单预留，
+# 版本在此锁定，避免每个工单各自改 Cargo.toml。
+tauri = { version = "=2.11.6", features = [] }
+# rustc 1.99.1 编译 serde_core（serde 1.0.220+ 拆出的内部 crate）会 ICE
+# （rustc_mir_transform/simplify.rs panic）。锁到拆分前的最后一版。
+serde = { version = "=1.0.219", features = ["derive"] }
+serde_json = "=1.0.140"
+thiserror = "2"
+rusqlite = { version = "0.32", features = ["bundled"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5"
+rfd = "0.15"
+tokio = { version = "1", features = ["full"] }
+tokio-util = "0.7"
+futures-util = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "blocking"] }
+base64 = "0.22"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

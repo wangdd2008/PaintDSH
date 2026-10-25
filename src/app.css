@@ -1,0 +1,264 @@
+/* PAINT 深色主题 —— 所有颜色走 CSS 变量，后续浅色主题只需覆盖变量。 */
+:root {
+  --paint-bg: #131417;
+  --paint-surface: #191b1f;
+  --paint-surface-raised: #1f2227;
+  --paint-border: #2a2d34;
+  --paint-border-strong: #363a43;
+  --paint-text: #e8eaee;
+  --paint-text-dim: #9096a2;
+  --paint-accent: #5b8cff;
+  --paint-accent-soft: rgba(91, 140, 255, 0.16);
+  --paint-canvas-backdrop: #0e0f12;
+  --paint-paper: #ffffff;
+  --paint-ok: #3ecf8e;
+  --paint-warn: #f0a23c;
+  --paint-danger: #ef5f5f;
+  --paint-radius: 6px;
+  --paint-shadow-paper: 0 18px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --paint-font: "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--paint-bg);
+  color: var(--paint-text);
+  font-family: var(--paint-font);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- 外壳：菜单栏 / 主体 / 状态栏 ---------- */
+.app-shell {
+  display: grid;
+  grid-template-rows: 40px minmax(0, 1fr) 26px;
+  height: 100vh;
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 248px;
+  min-height: 0;
+}
+
+/* ---------- 菜单栏 ---------- */
+.menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  background: var(--paint-surface);
+  border-bottom: 1px solid var(--paint-border);
+}
+
+.menu-bar__brand {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--paint-accent);
+}
+
+.menu-bar__menus {
+  display: flex;
+  gap: 2px;
+}
+
+.menu-bar__menu {
+  padding: 4px 10px;
+  border-radius: var(--paint-radius);
+  color: var(--paint-text-dim);
+}
+
+.menu-bar__menu:hover {
+  background: var(--paint-surface-raised);
+  color: var(--paint-text);
+}
+
+.menu-bar__meta {
+  margin-left: auto;
+  color: var(--paint-text-dim);
+  font-size: 11px;
+}
+
+/* ---------- 工具栏 ---------- */
+.toolbox {
+  background: var(--paint-surface);
+  border-right: 1px solid var(--paint-border);
+  padding: 10px 0;
+}
+
+.toolbox__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toolbox__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--paint-radius);
+  color: var(--paint-text-dim);
+  font-size: 15px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.toolbox__button:hover {
+  background: var(--paint-surface-raised);
+  color: var(--paint-text);
+}
+
+.toolbox__button[aria-pressed="true"] {
+  background: var(--paint-accent-soft);
+  color: var(--paint-accent);
+  box-shadow: inset 0 0 0 1px rgba(91, 140, 255, 0.4);
+}
+
+/* ---------- 画布区域 ---------- */
+.canvas-area {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: var(--paint-canvas-backdrop);
+}
+
+.canvas-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.canvas-stage__frame {
+  position: relative;
+  background: var(--paint-paper);
+  border: 1px solid var(--paint-border-strong);
+  border-radius: 2px;
+  box-shadow: var(--paint-shadow-paper);
+}
+
+.canvas-stage__frame canvas {
+  display: block;
+  border-radius: 2px;
+}
+
+/* ---------- 右侧面板 ---------- */
+.layer-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--paint-surface);
+  border-left: 1px solid var(--paint-border);
+  overflow-y: auto;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--paint-border);
+}
+
+.panel-section--grow {
+  flex: 1;
+  border-bottom: 0;
+}
+
+.panel-section__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-section__header h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paint-text-dim);
+}
+
+.panel-section__badge {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: var(--paint-surface-raised);
+  color: var(--paint-text-dim);
+  font-size: 11px;
+  text-align: center;
+}
+
+.panel-section__empty {
+  margin: 0;
+  color: var(--paint-text-dim);
+  font-size: 12px;
+}
+
+/* ---------- 状态栏 ---------- */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--paint-surface);
+  border-top: 1px solid var(--paint-border);
+  color: var(--paint-text-dim);
+  font-size: 11px;
+}
+
+.status-bar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--paint-text-dim);
+}
+
+.status-bar__dot--connected {
+  background: var(--paint-ok);
+}
+
+.status-bar__dot--disconnected {
+  background: var(--paint-danger);
+}
+
+.status-bar__dot--connecting {
+  background: var(--paint-warn);
+}
+
+.status-bar__spacer {
+  flex: 1;
+}
