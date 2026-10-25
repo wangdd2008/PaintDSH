@@ -163,18 +163,10 @@ fn fenced_blocks(text: &str) -> Vec<&str> {
 }
 
 /// 执行策略。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct OpsPolicy {
     /// 是否自动执行高风险操作（删除图层）。默认否——先让用户确认。
     pub auto_apply_dangerous: bool,
-}
-
-impl Default for OpsPolicy {
-    fn default() -> Self {
-        Self {
-            auto_apply_dangerous: false,
-        }
-    }
 }
 
 /// 逐条执行操作；单条失败不影响后续（都记进 `rejected`）。

@@ -1,7 +1,6 @@
 import { activeLayer, usePaintStore } from "../../stores/paint";
 import { describeFilter, DEFAULT_SPECS } from "../canvas/filters";
 import type { FilterSpec } from "../../lib/types";
-import { emptySvg } from "../canvas/svg";
 
 /**
  * 滤镜面板：只对 raster 图层直接生效；矢量图层会先提示栅格化。
@@ -71,9 +70,6 @@ export function FilterPanel() {
 
       <p className="filter-panel__hint">
         图层内容：{layer.content.type === "raster" ? "位图" : "矢量（需栅格化）"}
-        {layer.content.type === "vector" || layer.content.type === "aiCode"
-          ? ` · ${emptySvg().length} 字节空模板`
-          : ""}
       </p>
     </section>
   );

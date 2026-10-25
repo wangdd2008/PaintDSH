@@ -173,6 +173,9 @@ export class CanvasEngine {
     this.canvas.clear();
     this.canvas.backgroundColor = this.backgroundColor;
     this.canvas.requestRenderAll();
+    // 清空后必须让渲染缓存失效，否则同一 revision 的文档会被当成"已渲染"而跳过。
+    this.renderedRevision = -1;
+    this.layerObjects.clear();
   }
 
   /**

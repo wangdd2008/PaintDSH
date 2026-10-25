@@ -546,7 +546,6 @@ pub fn usage_summary(store: &Store, days: u32) -> Result<Vec<AiUsageRow>, AppErr
 mod tests {
     use super::*;
     use crate::events::RecordingSink;
-    use crate::paint::document::Actor;
     use crate::paint::service;
     use serde_json::json;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -760,7 +759,7 @@ mod tests {
         assert!(!summary.success);
         assert_eq!(sink.count(EVENT_AI_ERROR), 1);
         assert_eq!(sink.last_payload().unwrap()["kind"], json!("timeout"));
-        assert_eq!(list_calls(&store, 5).expect("审计")[0].success, false);
+        assert!(!list_calls(&store, 5).expect("审计")[0].success);
     }
 
     #[test]

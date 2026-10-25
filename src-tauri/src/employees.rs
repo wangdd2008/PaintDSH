@@ -244,6 +244,11 @@ pub fn save(store: &Store, input: EmployeeInput) -> Result<Employee, AppError> {
         None => None,
     };
 
+    // id 可能来自前端，而 preset 落盘路径要用它，先挡住路径穿越。
+    if let Some(id) = input.id.as_deref() {
+        crate::skills::sanitize_id(id)?;
+    }
+
     let now = now_ms();
     let existing_id = existing.as_ref().map(|employee| employee.id.clone());
     let builtin = existing.as_ref().map(|employee| employee.builtin).unwrap_or(false);

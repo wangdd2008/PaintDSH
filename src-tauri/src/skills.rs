@@ -375,7 +375,9 @@ fn collect_skills(
 
 /// 从 DSH 生态导入一个技能到 PAINT 技能目录（复制 SKILL.md）。
 pub fn import_dsh_skill(home: &PaintHome, skill_id: &str) -> Result<SkillInfo, AppError> {
-    let source_file = dsh_skills_dir(home).join(skill_id).join("SKILL.md");
+    // skill_id 来自前端，必须先挡住路径穿越再拼路径。
+    let skill_id = sanitize_id(skill_id)?;
+    let source_file = dsh_skills_dir(home).join(&skill_id).join("SKILL.md");
     if !source_file.is_file() {
         return Err(AppError::not_found(format!(
             "DSH 技能不存在：{skill_id}"
@@ -383,7 +385,7 @@ pub fn import_dsh_skill(home: &PaintHome, skill_id: &str) -> Result<SkillInfo, A
     }
 
     let target_id = if skill_id.starts_with(MANAGED_PREFIX) {
-        skill_id.to_string()
+        skill_id.clone()
     } else {
         format!("{MANAGED_PREFIX}{skill_id}")
     };
@@ -401,6 +403,24 @@ pub fn import_dsh_skill(home: &PaintHome, skill_id: &str) -> Result<SkillInfo, A
         path: target_file.to_string_lossy().into_owned(),
         enabled: true,
     })
+}
+
+/// 校验技能 id：只允许字母数字、`-`、`_`、`.`（且不能是 `..`）。
+pub fn sanitize_id(id: &str) -> Result<String, AppError> {
+    let trimmed = id.trim();
+    let valid = !trimmed.is_empty()
+        && trimmed != ".."
+        && trimmed != "."
+        && trimmed
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.'));
+
+    if !valid {
+        return Err(AppError::invalid_action(format!(
+            "非法的技能 id：{id}"
+        )));
+    }
+    Ok(trimmed.to_string())
 }
 
 /// 解析 YAML frontmatter 里的 `name` / `description`（只认这两行，不引入 yaml 依赖）。
@@ -614,6 +634,23 @@ mod tests {
         let (paint_home, root) = home();
         let error = import_dsh_skill(&paint_home, "nope").expect_err("应报错");
         assert_eq!(error.kind, crate::error::ErrorKind::NotFound);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn path_traversal_ids_are_rejected() {
+        let (paint_home, root) = home();
+
+        for id in ["../evil", "..\\evil", "a/b", "..", "", "a b"] {
+            let error = import_dsh_skill(&paint_home, id).expect_err("应拒绝");
+            assert_eq!(
+                error.kind,
+                crate::error::ErrorKind::InvalidAction,
+                "id = {id}"
+            );
+        }
+        assert!(sanitize_id("canvas-create-layer").is_ok());
+
         let _ = std::fs::remove_dir_all(&root);
     }
 }

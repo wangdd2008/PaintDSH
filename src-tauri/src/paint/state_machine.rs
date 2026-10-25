@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::error::{AppError, ErrorKind};
 use crate::paint::document::{
-    now_ms, Actor, BlendMode, CanvasDocument, FilterSpec, Layer, LayerContent, LayerMetadata,
+    now_ms, Actor, BlendMode, CanvasDocument, FilterSpec, Layer, LayerContent,
     LayerType, Region, Transform, MAX_LAYER_NAME_LEN,
 };
 
@@ -785,7 +785,7 @@ mod tests {
 
     #[test]
     fn metadata_helper_records_actor() {
-        let metadata = LayerMetadata::created_by(Actor::Agent);
+        let metadata = crate::paint::document::LayerMetadata::created_by(Actor::Agent);
 
         assert_eq!(metadata.created_by, Actor::Agent);
         assert!(metadata.filters.is_empty());

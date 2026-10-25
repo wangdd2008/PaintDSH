@@ -95,6 +95,19 @@ export const usePaintStore = create<PaintState>((set, get) => ({
 
   bootstrap: async (options = {}) => {
     try {
+      // 先接着上次的作品，避免每次启动都堆一个空画布在库里。
+      const existing = await bridge.listCanvases();
+      if (existing.length > 0) {
+        const document = await bridge.getCanvas(existing[0].id);
+        set({ document, error: null });
+        await get().refreshHistory();
+        return;
+      }
+    } catch {
+      // 列表失败（例如首启动）就继续走新建。
+    }
+
+    try {
       const document = await bridge.createCanvas(
         options.name ?? "未命名作品",
         options.width ?? 1280,

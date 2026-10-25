@@ -16,7 +16,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::{AppError, ErrorKind};
+use crate::error::AppError;
 use crate::fsutil::write_atomic;
 use crate::paths::PaintHome;
 
@@ -840,13 +840,14 @@ mod tests {
 
         let command = HarnessCommand {
             program: PathBuf::from("cmd"),
-            args: vec!["/c".to_string(), "ping -n 12 127.0.0.1".to_string()],
+            // stdout 重定向到 nul：让子进程长时间静默，验证看门狗不依赖输出。
+            args: vec!["/c".to_string(), "ping -n 60 127.0.0.1 > nul".to_string()],
             env: Vec::new(),
             cwd: std::env::temp_dir(),
         };
 
         let started = Instant::now();
-        let outcome = run(&command, Duration::from_millis(400), &mut |_| {}).expect("运行命令");
+        let outcome = run(&command, Duration::from_millis(500), &mut |_| {}).expect("运行命令");
 
         assert!(outcome.timed_out);
         assert!(!outcome.is_success());
@@ -870,6 +871,6 @@ mod tests {
         };
 
         let error = run(&command, Duration::from_secs(5), &mut |_| {}).expect_err("应拒绝并发");
-        assert_eq!(error.kind, ErrorKind::Busy);
+        assert_eq!(error.kind, crate::error::ErrorKind::Busy);
     }
 }

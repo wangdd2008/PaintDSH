@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../lib/bridge", () => ({
+  listCanvases: vi.fn(),
+  getCanvas: vi.fn(),
   createCanvas: vi.fn(),
   applyAction: vi.fn(),
   undo: vi.fn(),
@@ -54,6 +56,7 @@ describe("paint store", () => {
 
   it("bootstrap 创建画布并刷新历史", async () => {
     const doc = document();
+    vi.mocked(bridge.listCanvases).mockResolvedValue([]);
     vi.mocked(bridge.createCanvas).mockResolvedValue(doc);
     vi.mocked(bridge.historyStatus).mockResolvedValue({
       cursor: 0,
@@ -67,6 +70,34 @@ describe("paint store", () => {
     expect(bridge.createCanvas).toHaveBeenCalledWith("草稿", 800, 600);
     expect(usePaintStore.getState().document?.id).toBe("canvas-1");
     expect(usePaintStore.getState().history?.total).toBe(1);
+  });
+
+  it("bootstrap 优先复用最近的作品，不新建画布", async () => {
+    const doc = document();
+    vi.mocked(bridge.listCanvases).mockResolvedValue([
+      {
+        id: "canvas-1",
+        name: "上次的作品",
+        width: 800,
+        height: 600,
+        revision: 4,
+        layerCount: 2,
+        updatedAt: 10,
+      },
+    ]);
+    vi.mocked(bridge.getCanvas).mockResolvedValue(doc);
+    vi.mocked(bridge.historyStatus).mockResolvedValue({
+      cursor: 2,
+      total: 3,
+      canUndo: true,
+      canRedo: false,
+    });
+
+    await usePaintStore.getState().bootstrap();
+
+    expect(bridge.getCanvas).toHaveBeenCalledWith("canvas-1");
+    expect(bridge.createCanvas).not.toHaveBeenCalled();
+    expect(usePaintStore.getState().document?.name).toBe("测试");
   });
 
   it("dispatchAction 带上 revision 做乐观锁", async () => {
