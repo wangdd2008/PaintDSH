@@ -247,9 +247,47 @@ Rust：`cargo test`（在 `src-tauri/`），`cargo fmt --check`，`cargo clippy 
 
 前端：`react@19`、`react-dom@19`、`fabric@6`、`zustand@5`、`vite@6`、`typescript@5`、`vitest@3`、`@testing-library/react`、`jsdom`、`@vitejs/plugin-react`、`@tauri-apps/api@2`、`@tauri-apps/cli@2`。
 
-Rust：`tauri@2`、`tauri-build@2`、`serde`、`serde_json`、`rusqlite`（`bundled`）、`thiserror@2`、`uuid`（`v4`）、`chrono@0.4`、`rfd@0.15`、`tokio`、`tokio-util`、`futures-util`、`reqwest`（`json,stream,rustls-tls`，`default-features=false`）、`base64@0.22`、`dirs@5`。
+Rust：`tauri@2`、`tauri-build@2`、`serde`、`serde_json`、`rusqlite`（`bundled`）、`thiserror@2`、`uuid`（`v4`）、`chrono@0.4`、`rfd@0.15`、`tokio`、`tokio-util`、`futures-util`、`reqwest`（`json,stream,rustls-tls,blocking`，`default-features=false`）、`base64@0.22`、`dirs@5`。
 
 新增依赖必须在 ticket Comments 里说明理由。
+
+### 10.1 已落地的钉版（2026-10，勿随手 `cargo update`）
+
+rustc 1.99.1 在编译 `serde_core 1.0.229` 时会在 `rustc_mir_transform/simplify.rs` 触发 ICE（编译器 panic）。
+因此 Cargo.toml 把整条链钉在**拆分前**的版本组合，并经 `cargo test` + `cargo build` 验证：
+
+| crate | 版本 | 原因 |
+| --- | --- | --- |
+| `tauri` | `=2.11.6` | 2.12.x 的 `tauri-build` 2.7.4 会经 `cargo_toml` 强拉 serde ≥ 1.0.221 |
+| `tauri-build` | `2.6.3`（锁文件） | 同上，2.7.x 引入新 serde 依赖 |
+| `tauri-macros` / `tauri-codegen` | `2.6.3`（锁文件） | 2.7.4 生成 `Error::UnexpectedMenuKind` / `image::default_window_icon_from_app_icon_resource`，2.11.6 里都没有 |
+| `tauri-runtime` | `2.11.3`（锁文件） | 2.12.2 与 2.11.6 的 window/monitor API 不兼容 |
+| `tauri-runtime-wry` | `2.11.4`（锁文件） | 2.12.3 要求 `tauri-runtime ~2.12` |
+| `serde` | `=1.0.219` | 最后一代不拆 `serde_core` 的版本 |
+| `serde_json` | `=1.0.140` | 与之匹配 |
+
+升级路径：rustc 修掉 serde_core 的 ICE 之后，一次性放开 serde 与 tauri 全链，并在 ticket Comments 里记录新的 `cargo test` 结果。
+
+### 10.2 实测环境差异（实现时已按现实调整）
+
+1. **DSH 没有 agent preset registry**（`.agent-presets/` 不存在）。数字员工改为同步 persona patch：
+   `<PAINT_HOME>/harness/patches/employee-<id>.patch.yml`，内容覆盖 `system-prompt.personaPrefix`。
+2. **DSH 沙箱是文件写边界，不是命令黑名单**。`canvas-write` 的语义是「工作区内可写」，
+   真正的操作白名单由 PAINT 的 `ai::ops` + Command Dispatcher 承担；AI 通过最终答复里的
+   ```paint-ops 代码块提议操作。
+3. **DSH Web UI 不能用 iframe 嵌入**：启动 token 换的是 `SameSite=Strict` cookie，iframe 属第三方上下文会 401。
+   改为 Tauri 独立 `WebviewWindow`（label `dsh`）+ `initialization_script` 注入品牌脚本。
+4. **工作区注册**：`storages/workspace.json` 是 DSH 内部 schema，不手写；注册 = 写
+   `<knowledge>/.paint-workspace.json` 标记 + 该目录的 `AGENTS.md` + 全局 `AGENTS.md` 索引区块。
+
+### 10.3 契约增补（实现期间确认）
+
+- `CanvasDocument` 增加 `selectedRegion: Region | null`（`select_region` 的落点），JSON 缺省为 `null`。
+- 新增命令：`list_canvases`、`history_status`、`pick_export_path`、`read_knowledge`、`delete_knowledge_entry`。
+- `save_document` / `export_image` 返回实际写入路径（会补扩展名）。
+- 新增事件 `ai://pending-op`：AI 提议的高风险操作（删除图层）等待用户确认。
+- `ai_chat_start` 立即返回 `{ sessionId, engine, model }`，实际执行在后台线程，结果走事件。
+- 图层内容枚举必须用 `rename_all_fields = "camelCase"`，否则 `data_url` 不会变成 `dataUrl`。
 
 ---
 
